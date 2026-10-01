@@ -7,6 +7,7 @@ import com.example.ecommerce.mappers.ProductMapper;
 import com.example.ecommerce.repositories.CategoryRepository;
 import com.example.ecommerce.repositories.ProductRepository;
 import com.example.ecommerce.requests.ProductRequest;
+import jakarta.annotation.security.PermitAll;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -69,5 +70,36 @@ public class ProductController {
         ProductDto productDto = productMapper.toDto(savedProduct);
 
         return ResponseEntity.ok(productDto);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductDto> update(
+            @PathVariable Long id ,
+            @RequestBody ProductRequest request
+    ){
+        var product = productRepository.findById(id).orElse(null) ;
+        Category category = categoryRepository.findById(request.getCategoryId()).orElse(null);
+        if (category==null){
+            return ResponseEntity.notFound().build();
+        }
+        if (product==null){
+            return ResponseEntity.notFound().build();
+        }
+        productMapper.update(request,product);
+        product.setCategory(category);
+        productRepository.save(product) ;
+        return ResponseEntity.ok(productMapper.toDto(product)) ;
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id
+    ){
+        var product = productRepository.findById(id).orElse(null);
+        if (product==null){
+            return ResponseEntity.notFound().build();
+        }
+        productRepository.delete(product);
+        return ResponseEntity.noContent().build();
     }
 }
